@@ -18,7 +18,6 @@ package org.vsepml.storm.rest;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
-import org.vsepml.storm.twitter.StormTwitterStreamSpout;
 
 /**
  * Created by ferrynico on 10/01/15.
