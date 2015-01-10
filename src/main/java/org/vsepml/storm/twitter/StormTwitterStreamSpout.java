@@ -22,9 +22,13 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import twitter4j.*;
+import twitter4j.conf.ConfigurationBuilder;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -71,6 +75,22 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
                 ex.printStackTrace();
             }
         };
+
+        //twitter stream authentication setup
+        Properties prop = new Properties();
+        try {
+            prop.load(StormTwitterStreamSpout.class.getClassLoader().getResourceAsStream("config.properties"));
+        } catch (IOException e) {
+            journal.log(Level.SEVERE,e.toString());
+        }
+
+        ConfigurationBuilder twitterConf = new ConfigurationBuilder();
+        twitterConf.setIncludeEntitiesEnabled(true);
+
+        twitterConf.setOAuthAccessToken(prop.getProperty("OATH_ACCESS_TOKEN"));
+        twitterConf.setOAuthAccessTokenSecret(prop.getProperty("OATH_ACCESS_TOKEN_SECRET"));
+        twitterConf.setOAuthConsumerKey(prop.getProperty("OATH_CONSUMER_KEY"));
+        twitterConf.setOAuthConsumerSecret(prop.getProperty("OATH_CONSUMER_SECRET"));
 
         TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
         twitterStream.addListener(listener);
