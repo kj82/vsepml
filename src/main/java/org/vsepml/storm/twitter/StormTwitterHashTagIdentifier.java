@@ -33,7 +33,15 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
     private static final Logger journal = Logger.getLogger(StormTwitterStreamSpout.class.getName());
 
     private OutputCollector collector;
-    private ArrayList<String> identifiers;
+    private ArrayList<String> identifiers = new ArrayList<String>();
+
+    public void addIdentifier(String filter){
+        identifiers.add(filter);
+    }
+
+    public void removeIdentifier(String filter){
+        identifiers.remove(filter);
+    }
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
