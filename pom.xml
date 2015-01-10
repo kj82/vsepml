@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.vsepml</groupId>
+    <artifactId>root</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>vsepml :: Root</name>
+    <description>Virtual Sensor Event Processing Modelling Language</description>
+    <inceptionYear>2015</inceptionYear>
+
+    <properties>
+        <twitter4j.version>3.0.3</twitter4j.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.twitter4j</groupId>
+            <artifactId>twitter4j-core</artifactId>
+            <version>${twitter4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.twitter4j</groupId>
+            <artifactId>twitter4j-stream</artifactId>
+            <version>${twitter4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-core</artifactId>
+            <version>0.9.1-incubating</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Licence headers -->
+            <plugin>
+                <inherited>false</inherited>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.9.0</version>
+                <configuration>
+                    <strictCheck>true</strictCheck>
+                    <header>${project.basedir}/HEADER</header>
+                    <failIfMissing>true</failIfMissing>
+                    <aggregate>true</aggregate>
+                    <properties>
+                        <projectname>VSEP</projectname>
+                        <owner>Nicolas Ferry</owner>
+                        <year>${project.inceptionYear}</year>
+                        <artid>${project.artifactId}</artid>
+                    </properties>
+                    <mapping>
+                        <scala>JAVADOC_STYLE</scala>
+                        <conf>SCRIPT_STYLE</conf>
+                    </mapping>
+                    <excludes>
+                        <exclude>.gitignore</exclude>
+                        <exclude>.cache</exclude>
+                        <exclude>**/site.xml</exclude>
+                        <exclude>*.log</exclude>
+                        <exclude>*.srt</exclude>
+                        <exclude>*.csv</exclude>
+                        <exclude>*.txt</exclude>
+                        <exclude>*.json</exclude>
+                        <exclude>.idea/**</exclude>
+                        <exclude>**/src/main/resources/lgpl_header.txt</exclude>
+                        <exclude>**/src/test/resources/**</exclude>
+                        <exclude>**/src/test/data/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-headers</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
