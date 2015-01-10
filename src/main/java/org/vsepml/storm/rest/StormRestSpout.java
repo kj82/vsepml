@@ -19,9 +19,13 @@ import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
+import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Values;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
@@ -46,7 +50,7 @@ public class StormRestSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-
+        outputFieldsDeclarer.declare(new Fields("tweet"));
     }
 
     @Override
@@ -63,7 +67,18 @@ public class StormRestSpout extends BaseRichSpout {
     public void nextTuple() {
         try {
             clientSocket=serverSocket.accept();
-            InputStream inputStream=clientSocket.getInputStream();
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+            String line;
+            while ((line = in.readLine()) != null) {
+                if (line.length() == 0)
+                    break;
+            }
+
+            collector.emit(new Values(line));
+
+            in.close();
+            clientSocket.close();
 
         } catch (IOException e) {
             e.printStackTrace();
