@@ -24,7 +24,7 @@ import backtype.storm.topology.TopologyBuilder;
  */
 public class StormTwitterTopology {
 
-    static final String TOPOLOGY_NAME = "storm-twitter-word-count";
+    static final String TOPOLOGY_NAME = "storm-twitter";
 
     public static void main(String[] args) {
         Config config = new Config();
