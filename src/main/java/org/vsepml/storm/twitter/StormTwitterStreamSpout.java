@@ -19,8 +19,9 @@ import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
-import twitter4j.Status;
-import twitter4j.TwitterStream;
+import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Values;
+import twitter4j.*;
 
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,6 +29,7 @@ import java.util.logging.Logger;
 
 /**
  * Created by ferrynico on 10/01/15.
+ * Inspired by https://github.com/davidkiss/storm-twitter-word-count
  */
 public class StormTwitterStreamSpout extends BaseRichSpout {
 
@@ -40,16 +42,45 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-
+        outputFieldsDeclarer.declare(new Fields("tweet"));
     }
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.collector = collector;
+        queue = new LinkedBlockingQueue<Status>(1000);
+
+        StatusListener listener = new StatusListener(){
+            public void onStatus(Status status) {
+                queue.offer(status);
+            }
+
+            @Override
+            public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
+
+            @Override
+            public void onTrackLimitationNotice(int numberOfLimitedStatuses) {}
+
+            @Override
+            public void onScrubGeo(long l, long l1) {}
+
+            @Override
+            public void onStallWarning(StallWarning stallWarning) {}
+
+            public void onException(Exception ex) {
+                ex.printStackTrace();
+            }
+        };
+
+        TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
+        twitterStream.addListener(listener);
+        // sample() method internally creates a thread which manipulates TwitterStream and calls these adequate listener methods continuously.
+        twitterStream.sample();
     }
 
     @Override
     public void nextTuple() {
-
+        Status st = queue.poll();
+        collector.emit(new Values(st));
     }
 }
