@@ -19,24 +19,21 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
-import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
-import twitter4j.HashtagEntity;
-import twitter4j.Status;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.logging.Logger;
 
 /**
  * Created by ferrynico on 10/01/15.
  */
-public class StormTwitterHashtagSplitter extends BaseRichBolt {
+public class StormTwitterHashTagIdentifier extends BaseRichBolt {
 
     private static final Logger journal = Logger.getLogger(StormTwitterStreamSpout.class.getName());
 
     private OutputCollector collector;
+    private ArrayList<String> identifiers;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
@@ -45,14 +42,14 @@ public class StormTwitterHashtagSplitter extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        Status tweet = (Status) tuple.getValueByField("tweet");
-        HashtagEntity[] heTab=tweet.getHashtagEntities();
-        for(int i=0; i < heTab.length; i++ )
-            collector.emit(new Values(heTab[i].getText()));
+        String hashtag = (String) tuple.getValueByField("hashtag");
+        if(identifiers.contains(hashtag)){
+
+        }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("hashtag"));
+
     }
 }
