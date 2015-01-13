@@ -25,7 +25,6 @@ import backtype.storm.tuple.Values;
 import twitter4j.HashtagEntity;
 import twitter4j.Status;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -48,11 +47,11 @@ public class StormTwitterHashtagSplitter extends BaseRichBolt {
         Status tweet = (Status) tuple.getValueByField("tweet");
         HashtagEntity[] heTab=tweet.getHashtagEntities();
         for(int i=0; i < heTab.length; i++ )
-            collector.emit(new Values(heTab[i].getText()));
+            collector.emit(new Values(tweet.getUser(),heTab[i].getText()));
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("hashtag"));
+        outputFieldsDeclarer.declare(new Fields("author","hashtag"));
     }
 }

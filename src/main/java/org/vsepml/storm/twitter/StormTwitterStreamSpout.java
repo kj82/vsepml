@@ -21,14 +21,12 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import backtype.storm.utils.Utils;
 import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
 
-import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -43,6 +41,18 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
     private TwitterStream twitterStream;
     private LinkedBlockingQueue<Status> queue;
 
+    private String accessToken;
+    private String accessTokenSecret;
+    private String consumerKey;
+    private String consumerSecret;
+
+    public StormTwitterStreamSpout(String accessToken, String accessTokenSecret, String consumerKey, String consumerSecret){
+        super();
+        this.accessToken=accessToken;
+        this.accessTokenSecret=accessTokenSecret;
+        this.consumerKey=consumerKey;
+        this.consumerSecret=consumerSecret;
+    }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
@@ -51,7 +61,7 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
-        this.collector = collector;
+        this.collector = spoutOutputCollector;
         queue = new LinkedBlockingQueue<Status>(1000);
 
         StatusListener listener = new StatusListener(){
@@ -76,23 +86,17 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
             }
         };
 
-        //twitter stream authentication setup
-        Properties prop = new Properties();
-        try {
-            prop.load(StormTwitterStreamSpout.class.getClassLoader().getResourceAsStream("config.properties"));
-        } catch (IOException e) {
-            journal.log(Level.SEVERE,e.toString());
-        }
 
         ConfigurationBuilder twitterConf = new ConfigurationBuilder();
         twitterConf.setIncludeEntitiesEnabled(true);
 
-        twitterConf.setOAuthAccessToken(prop.getProperty("OATH_ACCESS_TOKEN"));
-        twitterConf.setOAuthAccessTokenSecret(prop.getProperty("OATH_ACCESS_TOKEN_SECRET"));
-        twitterConf.setOAuthConsumerKey(prop.getProperty("OATH_CONSUMER_KEY"));
-        twitterConf.setOAuthConsumerSecret(prop.getProperty("OATH_CONSUMER_SECRET"));
+        twitterConf.setOAuthAccessToken(accessToken);
+        twitterConf.setOAuthAccessTokenSecret(accessTokenSecret);
+        twitterConf.setOAuthConsumerKey(consumerKey);
+        twitterConf.setOAuthConsumerSecret(consumerSecret);
 
-        TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
+
+        TwitterStream twitterStream = new TwitterStreamFactory(twitterConf.build()).getInstance();
         twitterStream.addListener(listener);
         // sample() method internally creates a thread which manipulates TwitterStream and calls these adequate listener methods continuously.
         twitterStream.sample();
@@ -101,6 +105,10 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
     @Override
     public void nextTuple() {
         Status st = queue.poll();
-        collector.emit(new Values(st));
+        if (st == null) {
+            Utils.sleep(50);
+        } else {
+            collector.emit(new Values(st));
+        }
     }
 }

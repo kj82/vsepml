@@ -21,6 +21,10 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -36,11 +40,16 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
     private ArrayList<String> identifiers = new ArrayList<String>();
 
     public void addIdentifier(String filter){
-        identifiers.add(filter);
+        identifiers.add(filter.toLowerCase());
     }
 
     public void removeIdentifier(String filter){
-        identifiers.remove(filter);
+        identifiers.remove(filter.toLowerCase());
+    }
+
+    public StormTwitterHashTagIdentifier(ArrayList<String> identifiers){
+        super();
+        this.identifiers=identifiers;
     }
 
     @Override
@@ -51,8 +60,14 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
     @Override
     public void execute(Tuple tuple) {
         String hashtag = (String) tuple.getValueByField("hashtag");
-        if(identifiers.contains(hashtag)){
-
+        if(identifiers.contains(hashtag.toLowerCase())){
+        }try {
+            File file = new File("example.txt");
+            BufferedWriter output = new BufferedWriter(new FileWriter(file));
+            output.write((String)tuple.getValueByField("author"));
+            output.close();
+        } catch ( IOException e ) {
+            e.printStackTrace();
         }
     }
 
