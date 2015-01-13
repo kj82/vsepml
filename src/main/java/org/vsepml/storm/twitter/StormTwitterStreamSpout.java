@@ -89,7 +89,8 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
 
         ConfigurationBuilder twitterConf = new ConfigurationBuilder();
         twitterConf.setIncludeEntitiesEnabled(true);
-
+        twitterConf.setUseSSL(true);
+        twitterConf.setUserStreamRepliesAllEnabled(true);
         twitterConf.setOAuthAccessToken(accessToken);
         twitterConf.setOAuthAccessTokenSecret(accessTokenSecret);
         twitterConf.setOAuthConsumerKey(consumerKey);
@@ -106,7 +107,7 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
     public void nextTuple() {
         Status st = queue.poll();
         if (st == null) {
-            Utils.sleep(50);
+            Utils.sleep(100);
         } else {
             collector.emit(new Values(st));
         }

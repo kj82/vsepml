@@ -47,7 +47,7 @@ public class StormTwitterHashtagSplitter extends BaseRichBolt {
         Status tweet = (Status) tuple.getValueByField("tweet");
         HashtagEntity[] heTab=tweet.getHashtagEntities();
         for(int i=0; i < heTab.length; i++ )
-            collector.emit(new Values(tweet.getUser(),heTab[i].getText()));
+            collector.emit(new Values(tweet.getUser().getName(),heTab[i].getText()));
     }
 
     @Override
