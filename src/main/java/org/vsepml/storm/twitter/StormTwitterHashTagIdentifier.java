@@ -38,6 +38,8 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
 
     private OutputCollector collector;
     private ArrayList<String> identifiers = new ArrayList<String>();
+    private File file;
+    private BufferedWriter output;
 
     public void addIdentifier(String filter){
         identifiers.add(filter.toLowerCase());
@@ -50,6 +52,7 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
     public StormTwitterHashTagIdentifier(ArrayList<String> identifiers){
         super();
         this.identifiers=identifiers;
+        file = new File("example.txt");
     }
 
     @Override
@@ -61,13 +64,19 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
     public void execute(Tuple tuple) {
         String hashtag = (String) tuple.getValueByField("hashtag");
         if(identifiers.contains(hashtag.toLowerCase())){
-        }try {
-            File file = new File("example.txt");
-            BufferedWriter output = new BufferedWriter(new FileWriter(file));
-            output.write((String)tuple.getValueByField("author"));
-            output.close();
-        } catch ( IOException e ) {
-            e.printStackTrace();
+            try {
+                output = new BufferedWriter(new FileWriter(file));
+                output.append((String)tuple.getValueByField("author"));
+
+            } catch ( IOException e ) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
