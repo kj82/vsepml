@@ -62,11 +62,12 @@ public class StormTwitterTopology {
             b.setBolt("Identifier", new StormTwitterHashTagIdentifier(identifiers),1)
                     .shuffleGrouping("Splitter");
 
+
             StormSubmitter.submitTopology(TOPOLOGY_NAME, config, b.createTopology());
 
 
         } catch (IOException ex) {
-            journal.log(Level.INFO, ">> monitoring.properties not found status monitor not in use");
+            journal.log(Level.INFO, ">> twitter.properties not found");
         } finally {
             if (input != null) {
                 try {
