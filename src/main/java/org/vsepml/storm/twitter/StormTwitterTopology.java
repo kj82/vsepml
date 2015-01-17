@@ -21,6 +21,7 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.topology.TopologyBuilder;
+import storm.kafka.bolt.KafkaBolt;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -42,26 +43,42 @@ public class StormTwitterTopology {
         Config config = new Config();
         config.setNumWorkers(4);
 
+        Properties props = new Properties();
+        props.put("metadata.broker.list", args[0]);
+        props.put("request.required.acks", "1");
+        props.put("serializer.class", "kafka.serializer.StringEncoder");
+        config.put("kafka.broker.properties", props);
+
         TopologyBuilder b = new TopologyBuilder();
 
-        Properties prop = new Properties();
+        Properties propTwitter = new Properties();
         InputStream input = null;
         try {
 
             input = new FileInputStream("twitter.properties");
 
             // load a properties file
-            prop.load(input);
+            propTwitter.load(input);
 
-            b.setSpout("TwitterStreamSpout", new StormTwitterStreamSpout(prop.getProperty("accessToken"),
-                    prop.getProperty("accessTokenSecret"),prop.getProperty("consumerKey"),prop.getProperty("consumerSecret")),1);
+            b.setSpout("TwitterStreamSpout",
+                    new StormTwitterStreamSpout(
+                            propTwitter.getProperty("accessToken"),
+                            propTwitter.getProperty("accessTokenSecret"),
+                            propTwitter.getProperty("consumerKey"),
+                            propTwitter.getProperty("consumerSecret")), 1);
+
             b.setBolt("Splitter", new StormTwitterHashtagSplitter(),2)
                     .shuffleGrouping("TwitterStreamSpout");
+
             ArrayList<String> identifiers= new ArrayList<String>();
             identifiers.add("oslo");
             b.setBolt("Identifier", new StormTwitterHashTagIdentifier(identifiers),1)
                     .shuffleGrouping("Splitter");
 
+            StormKafkaBolt<String,String> kafka= new StormKafkaBolt<String,String>("latlong","test");
+
+            b.setBolt("kafkaBolt",kafka,2)
+                    .shuffleGrouping("Identifier");
 
             StormSubmitter.submitTopology(TOPOLOGY_NAME, config, b.createTopology());
 

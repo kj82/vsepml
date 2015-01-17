@@ -19,7 +19,10 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
+import twitter4j.GeoLocation;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -38,8 +41,6 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
 
     private OutputCollector collector;
     private ArrayList<String> identifiers = new ArrayList<String>();
-    private File file;
-    private BufferedWriter output;
 
     public void addIdentifier(String filter){
         identifiers.add(filter.toLowerCase());
@@ -52,7 +53,6 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
     public StormTwitterHashTagIdentifier(ArrayList<String> identifiers){
         super();
         this.identifiers=identifiers;
-        file = new File("example.txt");
     }
 
     @Override
@@ -63,25 +63,25 @@ public class StormTwitterHashTagIdentifier extends BaseRichBolt {
     @Override
     public void execute(Tuple tuple) {
         String hashtag = (String) tuple.getValueByField("hashtag");
-        if(identifiers.contains(hashtag.toLowerCase())){
-            try {
-                output = new BufferedWriter(new FileWriter(file));
-                output.append((String)tuple.getValueByField("author"));
-
-            } catch ( IOException e ) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        if(filterHashTag(hashtag.toLowerCase())){
+            if(tuple.getValueByField("geolocation") != null) {
+                GeoLocation l = (GeoLocation) tuple.getValueByField("geolocation");
+                collector.emit(new Values(l.getLatitude() + "," + l.getLongitude()));
             }
         }
     }
 
+    private Boolean filterHashTag(String hashTag){
+        for(String identifier: identifiers){
+            if (hashTag.toLowerCase().contains(identifier)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-
+        outputFieldsDeclarer.declare(new Fields("latlong"));
     }
 }

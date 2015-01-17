@@ -55,6 +55,12 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
     }
 
     @Override
+    public final void close() {
+        this.twitterStream.cleanUp();
+        this.twitterStream.shutdown();
+    }
+
+    @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declare(new Fields("tweet"));
     }
@@ -97,7 +103,7 @@ public class StormTwitterStreamSpout extends BaseRichSpout {
         twitterConf.setOAuthConsumerSecret(consumerSecret);
 
 
-        TwitterStream twitterStream = new TwitterStreamFactory(twitterConf.build()).getInstance();
+        twitterStream = new TwitterStreamFactory(twitterConf.build()).getInstance();
         twitterStream.addListener(listener);
         // sample() method internally creates a thread which manipulates TwitterStream and calls these adequate listener methods continuously.
         twitterStream.sample();
