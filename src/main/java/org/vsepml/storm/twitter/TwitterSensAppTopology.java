@@ -65,7 +65,7 @@ public class TwitterSensAppTopology {
                             propTwitter.getProperty("consumerKey"),
                             propTwitter.getProperty("consumerSecret")), 1);
 
-            b.setBolt("sensapp", new SensAppBolt("http://192.168.11.28:8080"),2).allGrouping("TwitterStreamSpout");
+            b.setBolt("sensapp", new SensAppBolt("http://192.168.11.28:8080/sensapp"),2).allGrouping("TwitterStreamSpout");
 
             StormSubmitter.submitTopology(TOPOLOGY_NAME, config, b.createTopology());
 

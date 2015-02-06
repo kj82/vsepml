@@ -53,7 +53,6 @@ public class SensAppBolt extends BaseRichBolt {
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-        String js=JsonPrinter.sensorToJson(s);
         if(!RestRequest.isSensorRegistred(s))
             RestRequest.postSensor(s);
     }
@@ -67,7 +66,7 @@ public class SensAppBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         Status tweet = (Status) tuple.getValueByField("tweet");
         LinkedList<ValueJsonModel> l=new LinkedList<ValueJsonModel>();
-        l.add(new StringValueJsonModel(tweet.getText(), tweet.getCreatedAt().getTime()));
+        l.add(new StringValueJsonModel(tweet.getText(), 0));
         StringMeasureJsonModel m=new StringMeasureJsonModel(name,tweet.getCreatedAt().getTime(),"m",l);
         try {
             String jsonString = mapper.writeValueAsString(m);
