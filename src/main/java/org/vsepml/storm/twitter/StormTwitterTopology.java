@@ -72,13 +72,13 @@ public class StormTwitterTopology {
 
             ArrayList<String> identifiers= new ArrayList<String>();
             identifiers.add("oslo");
-            b.setBolt("Identifier", new StormTwitterHashTagIdentifier(identifiers),1)
-                    .shuffleGrouping("Splitter");
+            //b.setBolt("Identifier", new StormTwitterHashTagIdentifier(identifiers),1).shuffleGrouping("Splitter");
 
-            StormKafkaBolt<String,String> kafka= new StormKafkaBolt<String,String>("latlong","test");
+            b.setBolt("ReflexiveContainer", new ReflexiveContainerBolt(8080, "http://ferrynico.com/TwitterPlugin.class")).shuffleGrouping("splitter");
 
-            b.setBolt("kafkaBolt",kafka,2)
-                    .shuffleGrouping("Identifier");
+            //StormKafkaBolt<String,String> kafka= new StormKafkaBolt<String,String>("latlong","test");
+
+            //b.setBolt("kafkaBolt",kafka,2).shuffleGrouping("Identifier");
 
             StormSubmitter.submitTopology(TOPOLOGY_NAME, config, b.createTopology());
 
