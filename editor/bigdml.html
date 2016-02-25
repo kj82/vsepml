@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>XXX Web Editor</title>
+		<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+		<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="jquery-easyui/themes/default/easyui.css">
+		<link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
+		<style>
+		  body {
+			padding-top: 50px;
+			padding-bottom: 40px;
+		  }
+		  .sidebar-nav {
+			padding: 9px 0;
+		  }
+
+		</style>
+	</head>
+
+
+	<body>
+
+		<nav class="navbar navbar-inverse navbar-fixed-top">
+	      <div class="container-fluid">
+	        <div class="navbar-header">
+	          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+	            <span class="sr-only">Toggle navigation</span>
+	            <span class="icon-bar"></span>
+	            <span class="icon-bar"></span>
+	            <span class="icon-bar"></span>
+	          </button>
+	          <a class="navbar-brand" href="#">XXX Web Editor</a>
+	        </div>
+	        <div id="navbar" class="navbar-collapse collapse">
+	          <ul class="nav navbar-nav navbar-right">
+	            <li><a href="#">Settings</a></li>
+	            <li><a href="#">Help</a></li>
+	          </ul>
+	        </div>
+	      </div>
+	    </nav>
+		
+	    <div class="container-fluid">
+		  <div class="row">
+		    <div class="col-sm-3" >
+				<div class="list-group">
+				  <a href="#collapse1" class="list-group-item" data-toggle="collapse">Data Stores<i class="fa fa-caret-square-o-down"></i>
+</a>
+				  <div id="collapse1" class="panel-collapse collapse">
+			        <ul class="list-group">
+			          <li class="list-group-item">Database</li>
+			          <li class="list-group-item">MongoDB</li>
+			          <li class="list-group-item">CouchDB</li>
+			        </ul>
+			      </div>
+				  <a href="#collapse2" class="list-group-item" data-toggle="collapse">Data Sources<i class="fa fa-caret-square-o-down"></i>
+</a>
+				  <div id="collapse2" class="panel-collapse collapse">
+			        <ul class="list-group">
+			          <li class="list-group-item">Generic</li>
+			          <li class="list-group-item">Twitter</li>
+			          <li class="list-group-item">Three</li>
+			        </ul>
+			      </div>
+				  <a href="#collapse3" class="list-group-item" data-toggle="collapse">Control Flow<i class="fa fa-caret-square-o-down"></i>
+</a>
+				  <div id="collapse3" class="panel-collapse collapse">
+			        <ul class="list-group">
+			          <li class="list-group-item">Join</li>
+			          <li class="list-group-item">Fork</li>
+			          <li class="list-group-item">Three</li>
+			        </ul>
+			      </div>
+				  <a href="#collapse4" class="list-group-item" data-toggle="collapse">Data Processors<i class="fa fa-caret-square-o-down"></i>
+</a>
+				  <div id="collapse4" class="panel-collapse collapse">
+			        <ul class="list-group">
+			          <li class="list-group-item">One</li>
+			          <li class="list-group-item">Two</li>
+			          <li class="list-group-item">Three</li>
+			        </ul>
+			      </div>
+				  <a href="#collapse5" class="list-group-item" data-toggle="collapse">Data Transformation<i class="fa fa-caret-square-o-down"></i>
+</a>
+				  <div id="collapse5" class="panel-collapse collapse">
+			        <ul class="list-group">
+			          <li class="list-group-item">One</li>
+			          <li class="list-group-item">Two</li>
+			          <li class="list-group-item">Three</li>
+			        </ul>
+			      </div>
+			      <a href="#collapse6" class="list-group-item" data-toggle="collapse">Message Queues<i class="fa fa-caret-square-o-down"></i>
+</a>
+				  <div id="collapse6" class="panel-collapse collapse">
+			        <ul class="list-group">
+			          <li class="list-group-item">One</li>
+			          <li class="list-group-item">Two</li>
+			          <li class="list-group-item">Three</li>
+			        </ul>
+			      </div>
+			      <a href="#collapse7" class="list-group-item" data-toggle="collapse">Data Visualizers<i class="fa fa-caret-square-o-down"></i>
+</a>
+				  <div id="collapse7" class="panel-collapse collapse">
+			        <ul class="list-group">
+			          <li class="list-group-item">One</li>
+			          <li class="list-group-item">Two</li>
+			          <li class="list-group-item">Three</li>
+			        </ul>
+			      </div>
+			      <a href="#" class="list-group-item">Composite</a>
+				</div>
+		    </div>
+
+		    <div class="col-sm-6">
+				<article>
+					<h2>Model Name</h2>
+					<div id="paper" class="paper"></div>
+				</article>
+		    </div>
+
+		    <div id="textAreaEditor" class="col-sm-3">
+		    	<table id="propertyTable" class="easyui-propertygrid"  data-options="               
+		    	url:'propertygrid_data1.json',
+                method:'get',
+                showGroup:true,
+                scrollbarSize:0"></table>
+		    </div>
+		   </div>
+		</div>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+		<script src="jquery-easyui/jquery.easyui.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="js/joint.css" />
+		<script src="js/lodash.min.js"></script>
+		<script src="js/backbone-min.js"></script>
+		<script src="js/joint.js"></script>
+		<script src="js/test.js"></script>
+		<script type="text/javascript">
+			$(".list-group > .list-group-item").click(function(){
+				$(".list-group-item").removeClass("active");
+    			$(this).addClass("active");
+			});
+
+
+		</script>
+	</body>
+
+		
+	<footer>
+	</footer>
+</html>
