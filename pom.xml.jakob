@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.stormtest</groupId>
+    <artifactId>rutermonitor</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>rutermonitor :: Root</name>
+    <description>Ruter real-time delay monitoring</description>
+    <inceptionYear>2015</inceptionYear>
+
+    <properties>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-core</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.twitter4j</groupId>
+        	<artifactId>twitter4j-stream</artifactId>
+        	<version>3.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-kafka</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.10</artifactId>
+            <version>0.8.1.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.zookeeper</groupId>
+                    <artifactId>zookeeper</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Licence headers -->
+            <plugin>
+                <inherited>false</inherited>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.9.0</version>
+                <configuration>
+                    <strictCheck>true</strictCheck>
+                    <header>${project.basedir}/HEADER</header>
+                    <failIfMissing>true</failIfMissing>
+                    <aggregate>true</aggregate>
+                    <properties>
+                        <projectname>VSEP</projectname>
+                        <owner>Nicolas Ferry</owner>
+                        <year>${project.inceptionYear}</year>
+                        <artid>${project.artifactId}</artid>
+                    </properties>
+                    <mapping>
+                        <scala>JAVADOC_STYLE</scala>
+                        <conf>SCRIPT_STYLE</conf>
+                    </mapping>
+                    <excludes>
+                        <exclude>.gitignore</exclude>
+                        <exclude>.cache</exclude>
+                        <exclude>**/site.xml</exclude>
+                        <exclude>*.log</exclude>
+                        <exclude>*.srt</exclude>
+                        <exclude>*.csv</exclude>
+                        <exclude>*.txt</exclude>
+                        <exclude>*.json</exclude>
+                        <exclude>.idea/**</exclude>
+                        <exclude>**/src/main/resources/lgpl_header.txt</exclude>
+                        <exclude>**/src/test/resources/**</exclude>
+                        <exclude>**/src/test/data/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-headers</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/standalone-jar.xml</descriptor>
+                    </descriptors>
+                    <appendAssemblyId>true</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+			   <artifactId>maven-compiler-plugin</artifactId>
+			   <version>2.0.2</version>
+			   <configuration>
+			       <source>1.7</source>
+			       <target>1.7</target>
+			   </configuration>
+			</plugin>
+        </plugins>
+    </build>
+
+</project>

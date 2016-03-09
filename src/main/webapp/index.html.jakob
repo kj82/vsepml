@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Ruter delay monitoring</title>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="utmconv.js"></script>
+    <!-- Ruter monitoring script --->
+    <script>
+      google.load('visualization', '1', {packages: ['corechart', 'line']});
+      /* Initialize everything when the window is ready */
+      google.maps.event.addDomListener(window, 'load', function() {
+        /* --- Initialisation function --- */
+        // Create Google map
+        var map = new google.maps.Map(document.getElementById('map-canvas'), {
+          zoom: 13,
+          center: { lat: 59.92, lng: 10.74 },
+          mapTypeId: google.maps.MapTypeId.PLAN
+        });
+        
+        // Prepare utm -> lat-lon converter
+        utmconv.setDatum(0);
+        var utmToLatLng = function(msg) {
+          return utmconv.utmToLatLng(msg.posX,msg.posY,32,false);
+        };
+        
+        // Delay seconds to string
+        var secondsToDelayString = function(seconds) {
+          var round = seconds > 0 ? Math.floor : Math.ceil;
+          
+          var hours = round(seconds / 3600);
+          seconds = seconds - hours*3600;
+          var minutes = round(seconds / 60);
+          seconds = seconds - minutes*60;
+          
+          if (hours != 0) {
+            return hours + "h " + Math.abs(minutes) + "m " + Math.abs(seconds) + "s";
+          } else if (minutes != 0) {
+            return minutes + "m " + Math.abs(seconds) + "s";
+          } else {
+            return seconds + "s";
+          }
+        };
+        var markerTitle = function(msg) {
+          return msg.stop + " [" + secondsToDelayString(msg.delay) + "]";
+        };
+        var markerIcon = function(msg) {
+          var url = 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=|';
+          if (msg.delay < 0) {
+            return url+'FFFFFF';
+          } else if (msg.delay < 60) {
+            return url+'00D900';
+          } else if (msg.delay < 120) {
+            return url+'FF9000';
+          } else {
+            return url+'FF0000';
+          }
+        };
+        
+        // Keep list of delays
+        var delays = {};
+        
+        // Handle posted delays
+        var handleDelayMsg = function(msg) {
+          if (delays[msg.stop]) {
+            var a = 0.18; //~5 sample IIR filtering
+            msg.delay = Math.round((1-a)*delays[msg.stop].delay+a*msg.delay);
+            
+            delays[msg.stop].delay = msg.delay;
+            delays[msg.stop].marker.setTitle(markerTitle(msg));
+            delays[msg.stop].marker.setIcon(markerIcon(msg));
+          } else {
+            delays[msg.stop] = {
+              delay: msg.delay,
+              pos: utmToLatLng(msg),
+              marker: new google.maps.Marker({
+                position: utmToLatLng(msg),
+                map: map,
+                title: markerTitle(msg),
+                icon: markerIcon(msg)
+              })
+            };
+          }
+        };
+        
+        // Get delays from last hour
+        (function() {
+          var request = new XMLHttpRequest();
+          request.onreadystatechange = function() {
+            if (request.readyState == 4) {
+              if (request.status == 200) {
+                var resp = JSON.parse(request.response);
+                var result = {};
+                if (resp.rows && resp.rows.length > 0) {
+                  resp.rows.forEach(function(row) {
+                    if (result[row.value.stop]) {
+                      result[row.value.stop].delay += row.value.delay;
+                      result[row.value.stop].count += 1;
+                    } else {
+                      result[row.value.stop] = { delay: row.value.delay, count: 1, posX: row.value.posX, posY: row.value.posY };
+                    }
+                  });
+                }
+                // Make fake delay messages to show markers
+                for (var stop in result) {
+                  var msg = { stop: stop };
+                  msg.delay = Math.round(result[stop].delay / result[stop].count);
+                  msg.posX = result[stop].posX;
+                  msg.posY = result[stop].posY;
+                  handleDelayMsg(msg);
+                }
+              }
+            }
+          };
+          
+          // TODO: Hack to get string 1 hour ago
+          var fromkey = (new Date()).toISOString().split('.')[0];
+          
+          request.open('GET','http://192.168.11.2:5984/stormtest_rutermonitor_stopvisits/_design/delays/_view/delays?startkey="'+fromkey+'"', true);
+          request.setRequestHeader('Authorization', 'Basic '+btoa('couchdb:couchdb'));
+          request.withCredentials = true;
+          request.setRequestHeader('Accept','application/json');
+          request.send();
+                    
+        })();
+        
+        // Make clock run
+        var updateClock = function() {
+          var clock = document.getElementById('clock');
+          var now = new Date();
+          var hours = now.getHours().toString();
+          var minutes = now.getMinutes().toString();
+          clock.innerHTML = (hours.length < 2 ? '0' + hours : hours) + ':' + (minutes.length < 2 ? '0' + minutes : minutes);
+        };
+        updateClock();
+        window.setInterval(updateClock,1000);
+        
+        // Add to list of departures
+        var addDepartureToTable = function(msg) {
+          var table = document.getElementById('departures-table');
+          var row = table.insertRow(table.rows.length);
+          row.insertCell(0).innerHTML = msg.line;
+          row.insertCell(1).innerHTML = msg.destination;
+          row.insertCell(2).innerHTML = secondsToDelayString(msg.delay);
+        };
+        
+        // Listen to websocket messages
+        var ws = new WebSocket('ws://192.168.11.2:7080/v2/broker/?topics=stormtest_rutermonitor_stopvisits');
+        ws.onopen = function() {
+          console.log('Connected to Kafka-WS');
+        };
+        ws.onmessage = function(msg) {
+          var data = JSON.parse(msg.data);
+          msg = JSON.parse(data.message);
+          //console.log('New departure: '+msg.line+' - '+msg.destination+' @ '+msg.stop+' - Delay: '+msg.delay);
+          handleDelayMsg(msg);
+          addDepartureToTable(msg);
+        };
+        
+        // Add tweets to list
+        var addTweetToList = function(msg) {
+          var list = document.getElementById('tweets-list');
+          var div = document.createElement('div');
+          div.innerHTML = '<b>@' + msg.user + ':</b> '+msg.text;
+          list.appendChild(div);
+        };
+        
+        // Listen to websocket tweets
+        var wst = new WebSocket('ws://192.168.11.2:7080/v2/broker/?topics=stormtest_rutermonitor_tweets');
+        wst.onmessage = function(msg) {
+          var data = JSON.parse(msg.data);
+          msg = JSON.parse(data.message);
+          //console.log('Tweet',msg.user,msg.text);
+          addTweetToList(msg);
+        };
+        
+        /* ---- Make plots ---- */
+        (function() {
+          // Make plot ready
+          
+          // Make plotting data
+          var data = new google.visualization.DataTable();
+          data.addColumn('datetime', 'Time');
+          data.addColumn('number', 'Metro');
+          data.addColumn('number', 'Tram');
+          data.addColumn('number', 'Bus');
+
+          var padZero = function(i) {
+            if (i < 10) return '0'+i;
+            else return i;
+          };
+          var now = new Date();
+          var rows = {};
+          for (var m = 24*60-1; m >= 0; m -= 10) {
+            var then = new Date(now-m*60*1000);
+            var time = padZero(then.getHours())+':'+Math.floor(then.getMinutes()/10);
+            var str = then.getFullYear()+'-'+padZero(then.getMonth()+1)+'-'+padZero(then.getDate())+'T'+time;
+            
+            rows[str] = data.addRow([then, 0, 0, 0]);
+          }
+
+          var chart = new google.visualization.LineChart(document.getElementById('delay-time-plot'));
+          var chartOpts =  {
+            backgroundColor: 'none',
+            hAxis: {
+              title: 'Time'
+            },
+            vAxis: {
+              title: 'Delays',
+              viewWindow: { min: 0, max: 10 }
+            },
+            animation:{
+              duration: 1000,
+              easing: 'out'
+            }
+          };
+          chart.draw(data,chartOpts);
+          
+          // Get actual data
+          var request = new XMLHttpRequest();
+          request.onreadystatechange = function() {
+            if (request.readyState == 4) {
+              if (request.status == 200) {
+                var resp = JSON.parse(request.response);
+                
+                resp.rows.forEach(function(row) {
+                  var col = row.key[1] == 'metro' ? 1 : row.key[1] == 'tram' ? 2 : 3;
+                  data.setCell(rows[row.key[0]], col, row.value[0]/row.value[1]/60);
+                });
+
+                chart.draw(data,chartOpts);
+              }
+            }
+          };
+
+          // TODO: Hack to get string of last 24 hours
+          var fromkey = (new Date(Date.now()-23*3600*1000)).toISOString().split(':').slice(0,2).join(':');
+
+          request.open('GET','http://192.168.11.2:5984/stormtest_rutermonitor_stopvisits/_design/delays/_view/minuteaverage?startkey=["'+fromkey+'",{}]&group_level=2', true);
+          request.setRequestHeader('Authorization', 'Basic '+btoa('couchdb:couchdb'));
+          request.withCredentials = true;
+          request.setRequestHeader('Accept','application/json');
+          request.send();
+        })();
+      });
+    </script>
+    <!-- CSS -->
+    <style>
+      html, body, div#map-canvas {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      
+      div#overlays {
+        position: absolute;
+        bottom: 40px;
+        top: 60px;
+        left: 10px;
+        right: 50px;
+      }
+      
+      div#panels {
+        position: absolute;
+        bottom: 0; top: 0; left: 0;
+        width: 20%;
+      }
+      div#panels-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+      
+      div#plots {
+        position: absolute;
+        left: 20%;
+        right: 0;
+        bottom: 0;
+        height: 30%;
+      }
+      div#delay-time-plot {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 50%;
+        background-color: white;
+        border-radius: 10px;
+      }
+      
+      div#tweets-panel {
+        position:relative;
+        height: 200px;
+        width: 100%;
+        background-color: white;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      div#tweets-panel img {
+        position:absolute;
+        height: 40px;
+        top: 0; right: 0;
+        background-color: white;
+        padding: 10px;
+        border-top-right-radius: 10px;
+        z-index: 1;
+      }
+      div#tweets-list {
+        position: absolute;
+        bottom:0; left: 0; right: 0;
+        padding: 5px;
+        color: #3b5998;
+      }
+      
+      div#departures-panel {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        background-color: black/*#555*/;
+        z-index: 5;
+        border-radius: 10px;
+        color: #FF0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        text-align: left;
+        overflow: hidden;
+      }
+      div#departures-panel div.title {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        padding: 10px 10px 0 10px;
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        background-color: inherit;
+        z-index: 1;
+      }
+      div#departures-panel div.title div.header {
+        padding: 0 10px;
+        float: left;
+      }
+      div#departures-panel div.title div#clock {
+        padding: 0 10px;
+        float: right;
+      }
+      div#departures-panel div.list {
+        padding: 0px 10px 10px 10px;
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+      }
+      div#departures-panel div table {
+        width: 100%;
+        font-size: 14px;
+        border-spacing: 0;
+      }
+      div#departures-panel div th {
+        color: white;
+        border-bottom: 2px solid grey;
+      }
+      div#departures-panel div th {
+        color: white;
+        border-bottom: 2px solid grey;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+    <div id="overlays">
+      <div id="panels">
+        <div id="panels-container">
+          <div id="tweets-panel">
+            <img src="https://g.twimg.com/Twitter_logo_blue.png"/>
+            <div id="tweets-list">
+            </div>
+          </div>
+          <div id="departures-panel">
+            <div class="title">
+              <div class="header">Departures</div>
+              <div id="clock"></div>
+              <div>
+                <table>
+                  <colgroup>
+                    <col style="width: 15%">
+                    <col style="width: 60%">
+                    <col style="width: 25%">
+                  </colgroup>
+                  <tr style="top">
+                    <th>Line</th>
+                    <th>Destination</th>
+                    <th>Delay</th>
+                  </tr>
+                </table>
+              </div>
+            </div>
+             <div class="list">
+              <table id="departures-table">
+                <colgroup>
+                  <col style="width: 15%; text-align: right;">
+                  <col style="width: 60%">
+                  <col style="width: 25%">
+                </colgroup>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="plots">
+        <div id="delay-time-plot">
+          <!--<div id="delay-tine-plot-data"></div>-->
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
