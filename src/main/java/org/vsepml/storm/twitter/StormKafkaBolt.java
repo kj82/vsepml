@@ -23,6 +23,8 @@ import backtype.storm.tuple.Tuple;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
+import org.vsepml.storm.mcsuite.SensorSerializer;
+import org.vsepml.storm.mcsuite.TupleToJSON;
 
 import java.util.Map;
 import java.util.Properties;
@@ -42,18 +44,15 @@ public class StormKafkaBolt<K,V> extends BaseRichBolt{
     private String topic;
 
     private String key;
-    private String message;
 
-    public StormKafkaBolt(String key, String message, String topic){
+    public StormKafkaBolt(String key, String topic){
         super();
         this.key=key;
-        this.message=message;
         this.topic = topic;
     }
 
-    public StormKafkaBolt(String message, String topic){
+    public StormKafkaBolt(String topic){
         super();
-        this.message=message;
         this.topic = topic;
     }
 
@@ -79,7 +78,8 @@ public class StormKafkaBolt<K,V> extends BaseRichBolt{
             key=String.valueOf(rnd.nextInt());
         }
 
-        Object message = tuple.getValueByField(this.message);
+        TupleToJSON serializer=new SensorSerializer();
+        String message=serializer.getJSONString(tuple);
 
         try {
             this.producer.send(new KeyedMessage(this.topic, key, message));
