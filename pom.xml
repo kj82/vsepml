@@ -84,7 +84,31 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!--<dependency>
+            <groupId>jarfter</groupId>
+            <artifactId>jarfter</artifactId>
+            <version>0.1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/transformation.jar</systemPath>
+        </dependency>-->
+        <dependency>
+            <groupId>grafterizer</groupId>
+            <artifactId>grafterizer</artifactId>
+            <version>1.1</version>
+        </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>clojars.org</id>
+            <url>http://clojars.org/repo</url>
+        </repository>
+        <repository>
+            <id>vsepml.local</id>
+            <name>vsepml</name>
+            <url>file:${project.basedir}/maven_repository</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
@@ -134,6 +158,29 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>com.theoryinpractise</groupId>
+                <artifactId>clojure-maven-plugin</artifactId>
+                <version>1.7.1</version>
+                <executions>
+                    <execution>
+                        <id>compile-clojure</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-clojure</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.5.3</version>
@@ -155,7 +202,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0.2</version>
+                <version>3.3</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>

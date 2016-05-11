@@ -50,13 +50,15 @@ public class MCsuiteTopology {
 
 
         b.setSpout("sensorStream", new SensorSimulatorSpout(args[2], 8000),1);
-        b.setBolt("Splitter", new CSVLineSplitterBolt('\t'),1).shuffleGrouping("sensorStream"); //split per line and add numbering
+        b.setBolt("Splitter", new CSVLineSplitterBolt(';'),1).shuffleGrouping("sensorStream"); //split per line and add numbering
+
+        b.setBolt("test", new GrafterBolt(),1).shuffleGrouping("sensorStream");
 
         // CouchDB configuration
-        //config.put(CouchBolt.COUCHDB_URL, "http://"+args[1]+":5984");
-        //config.put(CouchBolt.COUCHDB_USER, "couchdb");
-        //config.put(CouchBolt.COUCHDB_PASSWORD, "couchdb");
-        //b.setBolt("couch", new CouchBolt(new SensorSerializer()).withBatching(5, 20)).shuffleGrouping("Splitter");//store into couchdb
+        config.put(CouchBolt.COUCHDB_URL, "http://"+args[1]+":5984");
+        config.put(CouchBolt.COUCHDB_USER, "couchdb");
+        config.put(CouchBolt.COUCHDB_PASSWORD, "couchdb");
+        b.setBolt("couch", new CouchBolt(new SensorSerializer()).withBatching(5, 20)).shuffleGrouping("Splitter");//store into couchdb
 
 
         b.setBolt("Kafka", new StormKafkaBolt<String,String>("Sensors"),2).shuffleGrouping("Splitter");//publish on kafka

@@ -55,9 +55,14 @@ public class NumericalWindowAverageBolt extends BaseRichBolt {
             fifos.put(key,new CircularFifoBuffer(sizeFifo));
         CircularFifoBuffer fifo=fifos.get(key);
         fifo.add(tuple);
-        updateAvgValue(fifo);
-        collector.emit(new Values( tuple.getValueByField("MeasurementsAtTimeT"), avgValue, tuple.getValueByField("SensorId")));
-        collector.ack(tuple);
+        if(!tuple.getStringByField("MeasurementsAtTimeT").equals("")) {
+            if (!tuple.getStringByField("MeasurementsAtTimeT").toLowerCase().matches(".*[a-z].*")) {
+                updateAvgValue(fifo);
+                collector.emit(new Values(tuple.getValueByField("MeasurementsAtTimeT"), avgValue, tuple.getValueByField("SensorId"), tuple.getValueByField("MeasurementId")));
+                collector.ack(tuple);
+            }
+        }
+
     }
 
 
@@ -69,6 +74,7 @@ public class NumericalWindowAverageBolt extends BaseRichBolt {
 
         while(i.hasNext()){
             Tuple tuple = (Tuple) i.next();
+
             sum += Double.parseDouble(tuple.getStringByField("MeasurementsAtTimeT"));
             n++;
         }
@@ -81,6 +87,6 @@ public class NumericalWindowAverageBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MeasurementsAtTimeT","average","SensorId"));
+        outputFieldsDeclarer.declare(new Fields("MeasurementsAtTimeT","Average","SensorId","MeasurementId"));
     }
 }

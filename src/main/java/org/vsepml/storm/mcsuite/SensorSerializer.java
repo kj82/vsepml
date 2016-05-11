@@ -27,13 +27,13 @@ import java.util.Map;
  */
 public class SensorSerializer extends TupleToJSON {
     @Override
-    public String getDatabase() {
-        return "mc_suite_sensors";
+    public String getDatabase(Tuple input) {
+        return "mc-suite";
     }
 
     @Override
     public String getId(Tuple input) {
-        return input.getMessageId().toString();
+        return input.getValueByField("MeasurementId").toString();
     }
 
     @Override

@@ -24,7 +24,7 @@ import storm.kafka.bolt.mapper.TupleToKafkaMapper;
 import storm.kafka.bolt.selector.KafkaTopicSelector;
 
 public abstract class TupleToJSON implements TupleToKafkaMapper<String, String>, KafkaTopicSelector {
-    abstract public String getDatabase();
+    abstract public String getDatabase(Tuple input);
     abstract public String getId(Tuple input);
     abstract public Map<String, Object> getValues(Tuple input);
 
@@ -39,7 +39,7 @@ public abstract class TupleToJSON implements TupleToKafkaMapper<String, String>,
     // Override Kafka methods
     @Override
     public String getTopic(Tuple input) {
-        return getDatabase();
+        return getDatabase(input);
     }
     @Override
     public String getKeyFromTuple(Tuple input) {

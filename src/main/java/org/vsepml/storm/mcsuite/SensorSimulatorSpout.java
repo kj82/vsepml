@@ -35,6 +35,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

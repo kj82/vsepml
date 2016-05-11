@@ -74,6 +74,7 @@ public class CouchBolt implements IRichBolt {
     private long lastRequestTime;
     private int retries;
     private int currentTry;
+    private Map config;
 
 
 
@@ -91,12 +92,13 @@ public class CouchBolt implements IRichBolt {
     public void prepare(Map config, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
         this.buffer = new LinkedList<>();
+        this.config=config;
 
         this.retries = (int)config.getOrDefault(COUCHDB_RETRIES, 3);
         this.currentTry = 0;
         this.lastRequestTime = System.currentTimeMillis();
 
-        String surl = (String)config.get(COUCHDB_URL) + "/" + serializer.getDatabase();
+        String surl = (String)config.get(COUCHDB_URL) + "/" + serializer.getDatabase(null);
 
         try {
             URL dbUrl = new URL(surl);
@@ -119,7 +121,7 @@ public class CouchBolt implements IRichBolt {
                     this.url = new URL(surl + "/_bulk_docs");
                     break;
                 case HttpURLConnection.HTTP_BAD_REQUEST:
-                    throw new RuntimeException("Error creating database: " + serializer.getDatabase());
+                    throw new RuntimeException("Error creating database: " + serializer.getDatabase(null));
                 case HttpURLConnection.HTTP_UNAUTHORIZED:
                     throw new RuntimeException("Bad username/password for CouchDB: " + surl);
                 default:

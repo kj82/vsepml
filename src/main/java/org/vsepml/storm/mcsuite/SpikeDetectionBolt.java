@@ -51,7 +51,7 @@ public class SpikeDetectionBolt extends BaseRichBolt {
             double measurement=Double.parseDouble(tuple.getStringByField("MeasurementsAtTimeT"));
             if(average > 0){
                 if (Math.abs(measurement - average) > threshold * average) {
-                    collector.emit(new Values(true,measurement,(String)tuple.getValueByField("SensorId")));
+                    collector.emit(new Values(true,measurement,tuple.getValueByField("SensorId"), tuple.getValueByField("MeasurementId")));
                     collector.ack(tuple);
                 }
             }
@@ -60,6 +60,6 @@ public class SpikeDetectionBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("Alarm","MeasurementsAtTimeT","SensorId"));
+        outputFieldsDeclarer.declare(new Fields("Alarm","MeasurementsAtTimeT","SensorId", "MeasurementId"));
     }
 }

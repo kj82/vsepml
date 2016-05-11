@@ -27,6 +27,7 @@ import com.opencsv.CSVReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -56,15 +57,17 @@ public class CSVLineSplitterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        Long tmp=al.incrementAndGet();
         reader = new CSVReader(new StringReader(tuple.getStringByField("measurement")), separator);
         String[] nextLine;
         try {
             nextLine = reader.readNext();
             if (nextLine != null){
-                if (isDouble(nextLine[0])) {
-                    for (int i = 0; i < headers.length; i++) {
-                        collector.emit(new Values(headers[i], nextLine[i], tmp));
+                if (!nextLine[0].equals("Date")) {
+                    for (int i = 1; i < headers.length; i++) {
+                        Long tmp=al.incrementAndGet();
+                        Instant fromIso8601 = Instant.parse(nextLine[0]);
+                        long epoch=fromIso8601.toEpochMilli();//convert from iso8601 to unix epoch
+                        collector.emit(new Values(headers[i], nextLine[i], tmp, epoch)); //First should always be the timestamp
                     }
                 } else {
                     headers = nextLine;
@@ -95,7 +98,7 @@ public class CSVLineSplitterBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("SensorId","MeasurementsAtTimeT", "MeasurementId"));
+        outputFieldsDeclarer.declare(new Fields("SensorId","MeasurementsAtTimeT", "MeasurementId", "Timestamp"));
     }
 }
 
