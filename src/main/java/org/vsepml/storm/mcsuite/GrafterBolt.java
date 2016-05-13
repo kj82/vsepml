@@ -82,9 +82,13 @@ public class GrafterBolt extends BaseRichBolt {
                         sb.append(tuple.getStringByField("measurement"));
                         byte[] b = String.valueOf(sb).getBytes(StandardCharsets.UTF_8);
 
-                        journal.log(Level.INFO, ":::::>>>>>>>>>" + sb.toString());
                         ByteArrayInputStream in = new ByteArrayInputStream(b);
-                        mygraft.invoke(in, "/home/ubuntu/temp.nt");
+                        ByteArrayOutputStream out=new ByteArrayOutputStream();
+
+                        mygraft.invoke(in, out);
+
+                        collector.emit(new Values(out.toString()));
+                        collector.ack(tuple);
                     }
                 } else {
                     headers = tuple.getStringByField("measurement");
@@ -101,6 +105,6 @@ public class GrafterBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("Output"));
+        outputFieldsDeclarer.declare(new Fields("N-Triples"));
     }
 }
