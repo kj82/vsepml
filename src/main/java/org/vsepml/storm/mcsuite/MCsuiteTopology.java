@@ -23,7 +23,6 @@ import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import org.vsepml.storm.twitter.StormKafkaBolt;
-import org.vsepml.storm.twitter.TwitterSensAppTopology;
 
 import java.util.ArrayList;
 import java.util.Properties;
@@ -33,12 +32,12 @@ import java.util.logging.Logger;
  * Created by ferrynico on 09/03/2016.
  */
 public class MCsuiteTopology {
-    static final String TOPOLOGY_NAME = "mc-suite topology";
-    private static final Logger journal = Logger.getLogger(TwitterSensAppTopology.class.getName());
+    static final String TOPOLOGY_NAME = "mc-suite topology2";
+    private static final Logger journal = Logger.getLogger(MCsuiteTopology.class.getName());
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
         Config config = new Config();
-        config.setNumWorkers(2);
+        config.setNumWorkers(4);
 
         Properties props = new Properties();
         props.put("metadata.broker.list", args[0]);
@@ -52,13 +51,14 @@ public class MCsuiteTopology {
         b.setSpout("sensorStream", new SensorSimulatorSpout(args[2], 8000),1);
         b.setBolt("Splitter", new CSVLineSplitterBolt(';'),1).shuffleGrouping("sensorStream"); //split per line and add numbering
 
-        b.setBolt("test", new GrafterBolt(),1).shuffleGrouping("sensorStream");
+        //b.setBolt("test", new GrafterBolt(),1).shuffleGrouping("sensorStream");
 
         // CouchDB configuration
         config.put(CouchBolt.COUCHDB_URL, "http://"+args[1]+":5984");
         config.put(CouchBolt.COUCHDB_USER, "couchdb");
         config.put(CouchBolt.COUCHDB_PASSWORD, "couchdb");
-        b.setBolt("couch", new CouchBolt(new SensorSerializer()).withBatching(5, 20)).shuffleGrouping("Splitter");//store into couchdb
+        b.setBolt("couch", new CouchBolt(new SensorSerializer()).withBatching(1, 20),5).shuffleGrouping("Splitter");//store into couchdb
+
 
 
         b.setBolt("Kafka", new StormKafkaBolt<String,String>("Sensors"),2).shuffleGrouping("Splitter");//publish on kafka
@@ -69,7 +69,8 @@ public class MCsuiteTopology {
                 .shuffleGrouping("movingAverage");
 
         b.setBolt("Kafka2", new StormKafkaBolt<String, Double>("Averages"),2).shuffleGrouping("movingAverage");
-        b.setBolt("Kafka3", new StormKafkaBolt<String, Double>("Spikes"),2).shuffleGrouping("spikes");
+        b.setBolt("Kafka3", new StormKafkaBolt<String, Double>("Spikes"),1).shuffleGrouping("spikes");
+        //b.setBolt("Kafka4", new StormKafkaBolt<String, Double>("Grafter"),2).shuffleGrouping("test");
 
         try {
             StormSubmitter.submitTopology(TOPOLOGY_NAME, config, b.createTopology());

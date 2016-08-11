@@ -28,6 +28,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -42,7 +43,8 @@ public class CSVLineSplitterBolt extends BaseRichBolt {
     private OutputCollector collector;
     private CSVReader reader;
     private String[] headers;
-    private AtomicLong al = new AtomicLong(0);
+    private AtomicLong a = new AtomicLong(0);
+    private ArrayList<Header> al=new ArrayList<Header>();
 
     private static final Logger journal = Logger.getLogger(CSVLineSplitterBolt.class.getName());
 
@@ -64,13 +66,17 @@ public class CSVLineSplitterBolt extends BaseRichBolt {
             if (nextLine != null){
                 if (!nextLine[0].equals("Date")) {
                     for (int i = 1; i < headers.length; i++) {
-                        Long tmp=al.incrementAndGet();
+                        Long tmp=a.incrementAndGet();
                         Instant fromIso8601 = Instant.parse(nextLine[0]);
                         long epoch=fromIso8601.toEpochMilli();//convert from iso8601 to unix epoch
-                        collector.emit(new Values(headers[i], nextLine[i], tmp, epoch)); //First should always be the timestamp
+                        Header h=al.get(i-1);
+                        collector.emit(new Values(h.getName(), nextLine[i], tmp, epoch, h.getUnit(), h.getType(),h.getCoeff())); //First should always be the timestamp
                     }
                 } else {
                     headers = nextLine;
+                    for (int i = 1; i < headers.length; i++) {
+                        al.add(new Header(headers[i]));
+                    }
                 }
             }
             /*while ((nextLine = reader.readNext()) != null) {
@@ -98,7 +104,7 @@ public class CSVLineSplitterBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("SensorId","MeasurementsAtTimeT", "MeasurementId", "Timestamp"));
+        outputFieldsDeclarer.declare(new Fields("SensorId","MeasurementsAtTimeT", "MeasurementId", "Timestamp", "unit", "type", "coeff"));
     }
 }
 

@@ -74,9 +74,10 @@ public class NumericalWindowAverageBolt extends BaseRichBolt {
 
         while(i.hasNext()){
             Tuple tuple = (Tuple) i.next();
-
-            sum += Double.parseDouble(tuple.getStringByField("MeasurementsAtTimeT"));
-            n++;
+            if((tuple.getStringByField("MeasurementsAtTimeT") != null) && (!tuple.getStringByField("MeasurementsAtTimeT").equals(""))) {
+                sum += Double.parseDouble(tuple.getStringByField("MeasurementsAtTimeT"));
+                n++;
+            }
         }
         avgValue = 0;
         if (n != 0)

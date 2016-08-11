@@ -66,59 +66,67 @@ public class SensorSimulatorSpout extends BaseRichSpout {
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.collector = spoutOutputCollector;
-        queue = new LinkedBlockingQueue<String>(1000);
-        URL obj = null;
-        try {
-            obj = new URL("HTTP://"+this.ip+":"+this.port);
+        queue = new LinkedBlockingQueue<String>(1000000);
+        System.out.print("start queue");
 
-            con = (HttpURLConnection) obj.openConnection();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                URL obj = null;
+                try {
+                    obj = new URL("HTTP://"+ip+":"+port);
 
-            // optional default is GET
-            con.setRequestMethod("GET");
+                    con = (HttpURLConnection) obj.openConnection();
 
-            //add request header
-            con.setRequestProperty("User-Agent", USER_AGENT);
+                    // optional default is GET
+                    con.setRequestMethod("GET");
 
-            int responseCode = con.getResponseCode();
-            System.out.println("\nSending 'GET' request to URL : ");
-            System.out.println("Response Code : " + responseCode);
+                    //add request header
+                    con.setRequestProperty("User-Agent", USER_AGENT);
 
-            in = new BufferedReader(
-                    new InputStreamReader(con.getInputStream()));
-            /*String inputLine="";
+                    int responseCode = con.getResponseCode();
+                    System.out.println("\nSending 'GET' request to URL : ");
+                    System.out.println("Response Code : " + responseCode);
 
-            while((inputLine = in.readLine()) != null) {
-                Boolean b=queue.offer(inputLine);
-                System.out.println("::"+b);
-            }*/
+                    in = new BufferedReader(
+                            new InputStreamReader(con.getInputStream()));
+                    String inputLine="";
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (ProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+                    while((inputLine = in.readLine()) != null) {
+                        Boolean b=queue.offer(inputLine);
+                        //System.out.println("::"+b);
+                    }
+
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (ProtocolException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     @Override
     public void nextTuple() {
-        String inputLine="";
+        /*String inputLine="";
         try {
             if((inputLine = in.readLine()) != null){
                 collector.emit(new Values(inputLine));
+
             }else{
                 Utils.sleep(20);
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        /*String st = queue.poll();
+        }*/
+        String st = queue.poll();
         if (st == null) {
-            Utils.sleep(10);
+            Utils.sleep(5);
         } else {
             collector.emit(new Values(st));
-        }*/
+        }
 
     }
 }

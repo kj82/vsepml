@@ -28,7 +28,7 @@ import java.util.Map;
 public class SensorSerializer extends TupleToJSON {
     @Override
     public String getDatabase(Tuple input) {
-        return "mc-suite";
+        return "mc-suite2";
     }
 
     @Override

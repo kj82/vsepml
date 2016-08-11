@@ -43,8 +43,9 @@ public class GrafterTopology {
 
         b.setSpout("sensorStream", new SensorSimulatorSpout(args[0], 8000), 1);
 
-        b.setBolt("test", new GrafterBolt(), 1).shuffleGrouping("sensorStream");
+        b.setBolt("Grafter", new GrafterBolt(), 1).shuffleGrouping("sensorStream");
 
+        //b.setBolt("Fuseki", new FusekiBolt(args[0]), 1).shuffleGrouping("Grafter");
 
         try {
             StormSubmitter.submitTopology(TOPOLOGY_NAME, config, b.createTopology());

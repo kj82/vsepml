@@ -26,6 +26,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,6 +48,7 @@ public class GrafterBolt extends BaseRichBolt {
     private OutputCollector collector;
     private CSVReader reader;
     private String headers;
+    private AtomicLong al = new AtomicLong(0);
 
 
     @Override
@@ -56,7 +58,7 @@ public class GrafterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        reader = new CSVReader(new StringReader(tuple.getStringByField("measurement")), ',');
+        reader = new CSVReader(new StringReader(tuple.getStringByField("measurement")), ';');
         String[] nextLine;
         try {
             nextLine = reader.readNext();
@@ -79,19 +81,21 @@ public class GrafterBolt extends BaseRichBolt {
                         StringBuilder sb = new StringBuilder();
                         sb.append(headers);
                         sb.append("\n");
-                        sb.append(tuple.getStringByField("measurement"));
+                        String tmp=tuple.getStringByField("measurement").replace(';',',');//temporary hack
+                        sb.append(tmp);
                         byte[] b = String.valueOf(sb).getBytes(StandardCharsets.UTF_8);
 
                         ByteArrayInputStream in = new ByteArrayInputStream(b);
                         ByteArrayOutputStream out=new ByteArrayOutputStream();
 
-                        mygraft.invoke(in, out);
+                        mygraft.invoke(in,out);
 
-                        collector.emit(new Values(out.toString()));
+                        Long id=al.incrementAndGet();
+                        collector.emit(new Values(id+"grafter",out.toString()));
                         collector.ack(tuple);
                     }
                 } else {
-                    headers = tuple.getStringByField("measurement");
+                    headers = tuple.getStringByField("measurement").replace(';', ',');
                 }
             }
         } catch (IOException e) {
@@ -105,6 +109,6 @@ public class GrafterBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("N-Triples"));
+        outputFieldsDeclarer.declare(new Fields("MeasurementId","N-Triples"));
     }
 }
