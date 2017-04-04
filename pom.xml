@@ -94,7 +94,12 @@
         <dependency>
             <groupId>grafterizer</groupId>
             <artifactId>grafterizer</artifactId>
-            <version>1.3</version>
+            <version>1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.security</groupId>
+            <artifactId>xml-security-impl</artifactId>
+            <version>1.0</version>
         </dependency>
     </dependencies>
 

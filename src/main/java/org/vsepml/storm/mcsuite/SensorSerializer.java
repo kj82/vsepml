@@ -28,19 +28,21 @@ import java.util.Map;
 public class SensorSerializer extends TupleToJSON {
     @Override
     public String getDatabase(Tuple input) {
-        return "mc-suite2";
+        return "savvy3";
     }
 
     @Override
     public String getId(Tuple input) {
-        return input.getValueByField("MeasurementId").toString();
+        return input.getValueByField("Timestamp").toString();
     }
 
     @Override
     public Map<String, Object> getValues(Tuple input) {
         Map<String, Object> out = new HashMap<String, Object>();
-        for(int i=0 ; i < input.size() ; i++){
-            out.put(input.getFields().get(i),input.getValue(i));
+        for(int i=0 ; i < input.size() ; i++){ //all except timestamp
+            if(! (input.getFields().fieldIndex("Timestamp") == i)) {
+                out.put(input.getFields().get(i), input.getValue(i));
+            }
         }
         return out;
     }

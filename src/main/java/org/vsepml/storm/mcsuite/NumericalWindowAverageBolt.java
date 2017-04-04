@@ -58,7 +58,7 @@ public class NumericalWindowAverageBolt extends BaseRichBolt {
         if(!tuple.getStringByField("MeasurementsAtTimeT").equals("")) {
             if (!tuple.getStringByField("MeasurementsAtTimeT").toLowerCase().matches(".*[a-z].*")) {
                 updateAvgValue(fifo);
-                collector.emit(new Values(tuple.getValueByField("MeasurementsAtTimeT"), avgValue, tuple.getValueByField("SensorId"), tuple.getValueByField("MeasurementId")));
+                collector.emit(new Values(tuple.getValueByField("MeasurementsAtTimeT"), avgValue, tuple.getValueByField("SensorId"), tuple.getValueByField("MeasurementId"), tuple.getValueByField("Timestamp")));
                 collector.ack(tuple);
             }
         }
@@ -75,8 +75,12 @@ public class NumericalWindowAverageBolt extends BaseRichBolt {
         while(i.hasNext()){
             Tuple tuple = (Tuple) i.next();
             if((tuple.getStringByField("MeasurementsAtTimeT") != null) && (!tuple.getStringByField("MeasurementsAtTimeT").equals(""))) {
-                sum += Double.parseDouble(tuple.getStringByField("MeasurementsAtTimeT"));
-                n++;
+                try {
+                    sum += Double.parseDouble(tuple.getStringByField("MeasurementsAtTimeT"));
+                    n++;
+                }catch(NumberFormatException e){
+
+                }
             }
         }
         avgValue = 0;
@@ -88,6 +92,6 @@ public class NumericalWindowAverageBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MeasurementsAtTimeT","Average","SensorId","MeasurementId"));
+        outputFieldsDeclarer.declare(new Fields("MeasurementsAtTimeT","Average","SensorId","MeasurementId", "Timestamp"));
     }
 }

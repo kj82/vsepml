@@ -20,6 +20,8 @@ import java.util.Map;
 import org.json.simple.JSONObject;
 
 import backtype.storm.tuple.Tuple;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import storm.kafka.bolt.mapper.TupleToKafkaMapper;
 import storm.kafka.bolt.selector.KafkaTopicSelector;
 
@@ -30,9 +32,19 @@ public abstract class TupleToJSON implements TupleToKafkaMapper<String, String>,
 
     // Generate JSON string from values and id
     public String getJSONString(Tuple input) {
-        JSONObject out = new JSONObject();
+        JSONObject out= new JSONObject();;
+        if(getValues(input).containsKey("Document")){
+            JSONParser p=new JSONParser();
+            try {
+                out= (JSONObject) p.parse(getValues(input).get("Document").toString());
+
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }else {
+            out.putAll(getValues(input));
+        }
         out.put("_id", getId(input));
-        out.putAll(getValues(input));
         return out.toJSONString();
     }
 

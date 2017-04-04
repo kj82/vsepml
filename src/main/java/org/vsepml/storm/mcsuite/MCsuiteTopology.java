@@ -24,6 +24,7 @@ import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import org.vsepml.storm.twitter.StormKafkaBolt;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -34,6 +35,31 @@ import java.util.logging.Logger;
 public class MCsuiteTopology {
     static final String TOPOLOGY_NAME = "mc-suite topology2";
     private static final Logger journal = Logger.getLogger(MCsuiteTopology.class.getName());
+
+    private static ArrayList<String> getSensorsOfInterest(String path){
+        ArrayList<String> ls=new ArrayList<String>();
+        File file = new File(path);
+        if(file.exists()) {
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new FileReader(file));
+                String line = null;
+                while ((line = br.readLine()) != null) {
+                    System.out.println("===========================================>" + line);
+                    ls.add(line);
+                }
+
+                br.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }else{
+            System.out.println("===========================================>File does not exists");
+        }
+        return ls;
+    }
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
         Config config = new Config();
@@ -47,9 +73,9 @@ public class MCsuiteTopology {
 
         TopologyBuilder b = new TopologyBuilder();
 
-
         b.setSpout("sensorStream", new SensorSimulatorSpout(args[2], 8000),1);
         b.setBolt("Splitter", new CSVLineSplitterBolt(';'),1).shuffleGrouping("sensorStream"); //split per line and add numbering
+        b.setBolt("SplitterJSON", new CSVLineJSONBolt(';', getSensorsOfInterest(args[3])),1).shuffleGrouping("sensorStream"); //split per line and add numbering
 
         //b.setBolt("test", new GrafterBolt(),1).shuffleGrouping("sensorStream");
 
@@ -57,9 +83,7 @@ public class MCsuiteTopology {
         config.put(CouchBolt.COUCHDB_URL, "http://"+args[1]+":5984");
         config.put(CouchBolt.COUCHDB_USER, "couchdb");
         config.put(CouchBolt.COUCHDB_PASSWORD, "couchdb");
-        b.setBolt("couch", new CouchBolt(new SensorSerializer()).withBatching(1, 20),5).shuffleGrouping("Splitter");//store into couchdb
-
-
+        b.setBolt("couch", new CouchBolt(new SensorSerializer()).withBatching(1, 20),5).shuffleGrouping("SplitterJSON");//store into couchdb
 
         b.setBolt("Kafka", new StormKafkaBolt<String,String>("Sensors"),2).shuffleGrouping("Splitter");//publish on kafka
 
@@ -68,8 +92,8 @@ public class MCsuiteTopology {
         b.setBolt("spikes", new SpikeDetectionBolt(0.10f), 2) // Detect spike with respect to average
                 .shuffleGrouping("movingAverage");
 
-        b.setBolt("Kafka2", new StormKafkaBolt<String, Double>("Averages"),2).shuffleGrouping("movingAverage");
-        b.setBolt("Kafka3", new StormKafkaBolt<String, Double>("Spikes"),1).shuffleGrouping("spikes");
+        //b.setBolt("Kafka2", new StormKafkaBolt<String, Double>("Averages"),2).shuffleGrouping("movingAverage");
+        //b.setBolt("Kafka3", new StormKafkaBolt<String, Double>("Spikes"),1).shuffleGrouping("spikes");
         //b.setBolt("Kafka4", new StormKafkaBolt<String, Double>("Grafter"),2).shuffleGrouping("test");
 
         try {

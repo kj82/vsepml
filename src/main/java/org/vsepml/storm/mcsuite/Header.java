@@ -20,27 +20,44 @@ package org.vsepml.storm.mcsuite;
  */
 public class Header {
 
-    private String type;
-    private String unit;
-    private String coeff;
-    private String name;
+    private String type="";
+    private String unit="";
+    private String coeff="";
+    private String name="";
+    private String fullName="";
 
     public Header(String h){
+        this.fullName=h;
         String[] head = h.split("_");
-        name =head[0]+"_"+head[1];//Name is always the two firsts
-        if(head.length > 4){//Axis or spindle, then there is a type
-            type = head[2];
-            unit = head[3];
-            coeff = head[4];
-        }else{
-            if(head.length > 2){
-                unit = head[2];
-                if(head.length == 4){
-                    coeff = head[3];
+        if(head.length > 1) {
+            name = head[0] + "_" + head[1];//Name is always the two firsts
+            if (head.length > 4) {//Axis or spindle, then there is a coeff
+                type = head[2];
+                unit = head[3];
+                coeff = head[4];
+            } else {
+                if(head[1].equals("Program") || head[1].equals("Tool") ){//Rule is broken need ad-hoc crap
+                    name=head[0] + "_" + head[1] + "_" + head[2];
+                    if (head.length == 4) {
+                        type = head[3];
+                    }
+                }else {
+                    if (head.length > 2) {
+                        type = head[2];
+                        if (head.length == 4) {
+                            unit = head[3];
+                        }
+                    }
                 }
             }
+        }else{
+            name = head[0];
         }
 
+    }
+
+    public String getFullName(){
+        return fullName ;
     }
 
     public String getType() {

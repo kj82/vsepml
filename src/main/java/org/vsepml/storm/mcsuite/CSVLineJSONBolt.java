@@ -23,35 +23,35 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.opencsv.CSVReader;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by ferrynico on 09/03/2016.
+ * Created by ferrynico on 06/02/2017.
  */
-public class CSVLineSplitterBolt extends BaseRichBolt {
+public class CSVLineJSONBolt extends BaseRichBolt {
     private final char separator;
     private OutputCollector collector;
     private CSVReader reader;
-    private String[] headers;
-    private AtomicLong a = new AtomicLong(0);
     private ArrayList<Header> al=new ArrayList<Header>();
+    private ArrayList<String> ls;
+
 
     private static final Logger journal = Logger.getLogger(CSVLineSplitterBolt.class.getName());
 
-    public CSVLineSplitterBolt(char separator) {
+    public CSVLineJSONBolt(char separator, ArrayList<String> ls) {
         this.separator = separator;
+        this.ls=ls;
     }
 
     @Override
@@ -75,46 +75,45 @@ public class CSVLineSplitterBolt extends BaseRichBolt {
                         SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                         epoch=parser.parse(nextLine[0]).toInstant().toEpochMilli();
                     }
-                    for (int i = 1; i < headers.length; i++) {
-                        Long tmp=a.incrementAndGet();
+
+                    //Document d=new Document(epoch);
+                    JSONObject o=new JSONObject();
+                    JSONArray list = new JSONArray();
+                    for (int i = 1; i < nextLine.length; i++) {
                         Header h=al.get(i-1);
-                        collector.emit(new Values(h.getName(), nextLine[i], tmp, epoch, h.getUnit(), h.getType(),h.getCoeff())); //First should always be the timestamp
+                        if(ls.contains(h.getFullName())) {
+                            JSONObject tmp=new JSONObject();
+                            tmp.put("SensorID",h.getName());
+                            if(h.getName().equals("Cnc_Program_Name")){
+                                String[] splitted=nextLine[i].split("/");
+                                tmp.put("Measurement", splitted[splitted.length - 1]);
+                            }else {
+                                tmp.put("Measurement",nextLine[i]);
+                            }
+                            //tmp.put("Measurement",nextLine[i]);
+                            tmp.put("Type", h.getType());
+                            tmp.put("Unit",h.getUnit());
+                            tmp.put("Coeff",h.getCoeff());
+                            list.add(tmp);
+                        }
                     }
+                    o.put("Measurements", list);
+                    collector.emit(new Values(epoch,o.toJSONString()));
                 } else {
-                    headers = nextLine;
-                    for (int i = 1; i < headers.length; i++) {
-                        al.add(new Header(headers[i]));
+                    for (int i = 1; i < nextLine.length; i++) {
+                        al.add(new Header(nextLine[i]));
                     }
                 }
             }
-            /*while ((nextLine = reader.readNext()) != null) {
-                Long tmp=al.incrementAndGet();
-                for(int i=0; i < headers.length;i++){
-                    System.out.println(headers[i] + "" + nextLine[i] + "" + tmp);
-                    collector.emit(new Values(headers[i], nextLine[i], tmp));
-                }
-            }*/
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
             e.printStackTrace();
-        } finally {
-            collector.ack(tuple);
-        }
-    }
-
-    public boolean isDouble( String str ){
-        try {
-            Double.parseDouble(str);
-            return true;
-        }catch( Exception e ){
-            return false;
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("SensorId","MeasurementsAtTimeT", "MeasurementId", "Timestamp", "unit", "type", "coeff"));
+        outputFieldsDeclarer.declare(new Fields("Timestamp", "Document"));
     }
 }
-
